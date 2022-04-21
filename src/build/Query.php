@@ -202,7 +202,14 @@ class Query implements \ArrayAccess, \Iterator {
 	 * @return mixed
 	 */
 	public function links() {
-		return new Page();
+		return Page::single();
+	}
+	/**
+	 * 获取对象数据
+	 * @return mixed
+	 */
+	public function toArray() {
+		return $this->objdata;
 	}
 	/**
 	 * 查找字段
