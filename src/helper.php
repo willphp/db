@@ -10,3 +10,18 @@ if (!function_exists('db')) {
 		return \willphp\db\Db::connect($config, $table);
 	}
 }
+if (!function_exists('get_sign_id')) {
+	/**
+	 * 获取名称标识
+	 * @param string|array $data 数据
+	 * @param number $len 长度
+	 * @return string
+	 */
+	function get_sign_id($data, $len = 6) {
+		if (is_array($data)) {
+			ksort($data);
+			$data = http_build_query($data);
+		}
+		return substr(md5($data), 0, $len);
+	}
+}
