@@ -1,0 +1,35 @@
+{
+  "name": "willphp/db",
+  "description": "db组件是基于PDO链式数据库操作的ORM框架",
+  "keywords": [
+    "willphp",
+    "一鱼框架",
+    "orm",
+    "mysql",
+    "数据库操作"
+  ],
+  "homepage": "http://www.113344.com/",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "no-mind",
+      "email": "24203741@qq.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "require": {
+    "php": ">=5.6.0",
+    "willphp/config": "~1.0",
+    "willphp/cache": "~1.0",
+    "willphp/page": "~1.0",
+    "willphp/middleware": "~1.0"
+  },
+  "autoload": {
+    "files": [
+      "src/helper.php"
+    ],
+    "psr-4": {
+      "willphp\\db\\": "src"
+    }
+  }
+}
