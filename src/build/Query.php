@@ -490,7 +490,15 @@ class Query implements \ArrayAccess, \Iterator {
 		$alias = 'willphp_'.strtolower($type);
 		$type = strtoupper($type);
 		$total_type = ['COUNT', 'SUM', 'MIN', 'MAX', 'AVG'];
-		if (in_array($type, $total_type)) {					
+		if (in_array($type, $total_type)) {			
+			$options = [];
+			if (isset($this->options['table'])) {
+				$options['table'] = $this->options['table'];
+			}
+			if (isset($this->options['where'])) {
+				$options['where'] = $this->options['where'];
+			}
+			$this->options = $options;			
 			$res = $this->field($type.'('.$field.') AS '.$alias)->find();
 			if ($res instanceof \PDOStatement || is_string($res)) {
 				return $res;
