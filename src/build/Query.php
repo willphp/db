@@ -3,22 +3,19 @@
  | Software: [WillPHP framework]
  | Site: www.113344.com
  |--------------------------------------------------------------------------
- | Author: no-mind <24203741@qq.com>
+ | Author: 无念 <24203741@qq.com>
  | WeChat: www113344
  | Copyright (c) 2020-2022, www.113344.com. All Rights Reserved.
  |-------------------------------------------------------------------------*/
 namespace willphp\db\build;
-use willphp\middleware\Middleware;
-use willphp\page\Page;
 use willphp\config\Config;
 use willphp\cache\Cache;
+use willphp\page\Page;
+use willphp\middleware\Middleware;
 /**
  * 查询构造器
- * @author Nomind 24203741@qq.com
- * @version v1.0
  */
 class Query implements \ArrayAccess, \Iterator {
-	use ArrayAccessIterator;	
 	protected $connection = null; //DB链接实例
 	protected $builder = null; //SQL构造实例
 	protected $table; //当前表名
@@ -47,8 +44,10 @@ class Query implements \ArrayAccess, \Iterator {
 	 * 获取字段列表
 	 * @return array
 	 */
-	public function getFieldList() {		
-		$table = $this->getTable();		
+	public function getFieldList($table) {	
+		if (!$table) {
+			$table = $this->getTable();
+		}					
 		$name = $table.'_field';
 		$cache = Cache::get($name);
 		if (!$cache) {
@@ -64,8 +63,8 @@ class Query implements \ArrayAccess, \Iterator {
 	 * @param string $table
 	 * @return string
 	 */
-	public function getPk() {
-		$fields = $this->getFieldList();
+	public function getPk($table = '') {
+		$fields = $this->getFieldList($table);
 		return isset($fields['pri'])? $fields['pri'] : 'id';
 	}
 	/**
@@ -74,9 +73,9 @@ class Query implements \ArrayAccess, \Iterator {
 	 * @param string $table
 	 * @return array
 	 */
-	public function filterTableField(array $data) {
+	public function filterTableField(array $data, $table = '') {
 		$new = [];		
-		$fields = $this->getFieldList();
+		$fields = $this->getFieldList($table);
 		if (is_array($data)) {
 			foreach ((array)$data as $name => $value) {
 				if (in_array($name, $fields)) {
@@ -119,9 +118,9 @@ class Query implements \ArrayAccess, \Iterator {
 	 * @param bool|string $obj	指定返回的数据集对象
 	 * @return mixed 数据集
 	 */
-	public function query($sql, $bind = [], $obj = false) {		
-		$realsql = $this->connection->getRealSql($sql, $bind);
-		Middleware::web('database_query', $realsql);		
+	public function query($sql, $bind = [], $obj = false) {			
+		$realsql = $this->connection->getRealSql($sql, $bind);				
+		Middleware::web('database_query', $realsql);	
 		return $this->connection->query($sql, $bind, $obj);
 	}
 	/**
@@ -249,8 +248,11 @@ class Query implements \ArrayAccess, \Iterator {
 		$count = $this->count();		
 		Page::set(['pageSize'=>$row, 'pageNum'=>$pageNum])->make($count);
 		$this->options = $options;
-		$this->options['limit'] = Page::getLimit();	
-		$res = $this->select();		
+		$this->options['limit'] = Page::getLimit();				
+		$res = $this->select();	
+		if (!is_array($res)) {
+			return $res;
+		}
 		$this->objdata = ($res)? $res : [];
 		array_walk_recursive($this->objdata, 'self::parseVars');
 		return $this;
@@ -310,15 +312,6 @@ class Query implements \ArrayAccess, \Iterator {
 		return $data;		
 	}
 	/**
-	 * 设置字段
-	 * @param string $field 设置的字段
-	 * @param string $value 设置的值
-	 * @return integer  受影响行数
-	 */
-	public function setField($field, $value) {
-		return $this->data($field, $value)->update();
-	}
-	/**
 	 * 获取SQL结果
 	 * @param string $sql 查询语句
 	 * @return array  结果集
@@ -357,6 +350,15 @@ class Query implements \ArrayAccess, \Iterator {
 		$result = $this->execute($sql, $bind);
 		return $result;
 	}	
+	/**
+	 * 设置字段
+	 * @param string $field 设置的字段
+	 * @param string $value 设置的值
+	 * @return integer  受影响行数
+	 */
+	public function setField($field, $value) {
+		return $this->data($field, $value)->update();
+	}
 	/**
 	 * 字段自增
 	 * @param string  $field 字段名
@@ -410,17 +412,17 @@ class Query implements \ArrayAccess, \Iterator {
 	 * @return integer 影响行数或自增ID
 	 */
 	public function insert(array $data = [], $getLastInsID = false, $replace = false) {
-		$options = $this->parseExpress();
+		$options = $this->parseExpress();		
 		$data = array_merge($options['data'], $data);				
-		$data = $this->filterTableField($data);		
-		$sql = $this->builder->insert($data, $options, $replace);
+		$data = $this->filterTableField($data, $options['table']);		
+		$sql = $this->builder->insert($data, $options, $replace);		
 		$bind = $this->getBind();
 		if (isset($options['sql']) && $options['sql']) {
 			return $this->connection->getRealSql($sql, $bind);
 		}
 		$result = (false === $sql) ? false : $this->execute($sql, $bind);
 		if ($result && $getLastInsID) {			
-			$pk = $this->getPk();
+			$pk = $this->getPk($options['table']);
 			return $this->getInsertId($pk);
 		}
 		return $result;
@@ -467,7 +469,7 @@ class Query implements \ArrayAccess, \Iterator {
 	 * @return array 所有字段数组 键名为pri是自增主键
 	 */
 	public function getAllFields($table) {
-		$prefix = $this->connection->getConfig('table_pre'); 	
+		$prefix = $this->connection->getConfig('db_prefix'); 	
 		$sql = 'show columns from '.$prefix.$table;
 		$result = $this->query($sql);
 		$data = [];
@@ -497,6 +499,9 @@ class Query implements \ArrayAccess, \Iterator {
 			}
 			if (isset($this->options['where'])) {
 				$options['where'] = $this->options['where'];
+			}
+			if (isset($this->options['sql'])) {
+				$options['sql'] = true;
 			}
 			$this->options = $options;			
 			$res = $this->field($type.'('.$field.') AS '.$alias)->find();
@@ -612,7 +617,9 @@ class Query implements \ArrayAccess, \Iterator {
 	public function table($table) {
 		if (is_string($table)) {
 			if (strpos($table, ')')) {
+				//子查询
 			} elseif (strpos($table, ',')) {
+				//多表
 				$tables = explode(',', $table);
 				$table  = [];
 				foreach ($tables as $item) {
@@ -645,6 +652,9 @@ class Query implements \ArrayAccess, \Iterator {
 			}
 		} else {
 			$table = is_array($this->options['table']) ? key($this->options['table']) : $this->options['table'];
+			if (!$table) {
+				$table = $this->table;
+			}
 			$this->options['alias'][$table] = $alias;
 		}		
 		return $this;
@@ -905,5 +915,34 @@ class Query implements \ArrayAccess, \Iterator {
 			return $this->where($field, current($params))->find();
 		}
 		return call_user_func_array([$this->connection, $method], $params);
+	}
+	public function offsetSet($key, $value) {
+		$this->objdata[$key] = $value;
+	}	
+	public function offsetGet($key)	{
+		return isset($this->objdata[$key]) ? $this->objdata[$key] : null;
+	}	
+	public function offsetExists($key)	{
+		return isset($this->objdata[$key]);
+	}	
+	public function offsetUnset($key)	{
+		if (isset($this->objdata[$key])) {
+			unset($this->objdata[$key]);
+		}
+	}	
+	public function rewind() {
+		reset($this->objdata);
+	}	
+	public function current() {
+		return current($this->objdata);
+	}	
+	public function next() {
+		return next($this->objdata);
+	}	
+	public function key() {
+		return key($this->objdata);
+	}	
+	public function valid()	{
+		return current($this->objdata);
 	}
 }

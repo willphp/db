@@ -1,20 +1,20 @@
-# 数据库ORM
-db组件是基于PDO链式数据库操作的ORM框架
+##数据库组件
 
-#开始使用
+Db组件是基于PDO链式数据库操作的组件
 
-####安装组件
-使用 composer 命令进行安装或下载源代码使用(依赖willphp/config组件)。
+###安装组件
+
+使用 composer 命令进行安装或下载源代码使用(依赖config,cache,page,middleware组件)。
 
     composer require willphp/db
 
-> WillPHP 框架已经内置此组件，无需再安装。
+>WillPHP框架已经内置此组件，无需再安装。
 
-####调用示例
+###调用示例
 
     \willphp\db\Db::query("select * from wp_test where id=:id AND title=:title", ['id'=>11,'title'=>'r10']);
 
-####数据库配置
+###数据库配置
 
 `config/database.php`配置文件设置如下：
 	
@@ -26,7 +26,7 @@ db组件是基于PDO链式数据库操作的ORM框架
 		'db_user' => 'root', //数据库用户名
 		'db_pwd' => '', //数据库密码
 		'db_name' => 'myapp01db', //数据库名
-		'table_pre' => 'wp_', //数据库表前缀
+		'db_prefix' => 'wp_', //数据库表前缀
 		'db_charset' => 'utf8', //默认字符编码
 		'pdo_params' => [
 			\PDO::ATTR_CASE => \PDO::CASE_NATURAL,
@@ -46,21 +46,21 @@ db组件是基于PDO链式数据库操作的ORM框架
 	],
 	
 
-####连接配置
+###连接配置
 
 通过connect方法连接配置操作DB：
 
 	Db::connect('sqlite')->table('test')->select();
 	Db::connect(['db_host'=>'127.0.0.1'], 'test')->select();
 
-####预准备操作
+###预准备操作
 
 组件支持使用预准备查询，可以完全避免SQL注入。
 
     Db::execute("update test set total=:total where id=:id",['total'=>6,'id'=>1]);
     Db::query("select * from wp_test where id=? AND title=?", [11, 'willphp']);
 
-####数据查询
+###数据查询
 
 表别名 | alias
 
@@ -136,7 +136,7 @@ db组件是基于PDO链式数据库操作的ORM框架
 
     Db::table('test a')->join('demo b', 'a.pid=b.id', 'left')->select();  
 
-####数据增改
+###数据增改
 
  数据新增 | insert，replace，insertGetId，insertAll
 
@@ -160,14 +160,14 @@ db组件是基于PDO链式数据库操作的ORM框架
 
     Db::table('users')->where('id', 1)->setDec('score'); //score减少1
 
-####数据删除
+###数据删除
 
 数制删除 | delete
 
     Db::table('users')->where('id', 2)->delete(); //删除id=2的数据
     Db::table('users')->delete([1,2]); //删除id=1和2的数据
 
-####其他操作
+###其他操作
 
     union //查询 union
     group //设置group查询
@@ -180,7 +180,7 @@ db组件是基于PDO链式数据库操作的ORM框架
     force //指定强制索引
     comment //查询注释
 
-####事务支持
+###事务支持
 
     Db::startTrans(); //启动事务
     $r1 =Db::table('demo')->add(['cname'=>'r10']);
@@ -198,13 +198,19 @@ db组件是基于PDO链式数据库操作的ORM框架
     	Db::table('test')->where('id', 1)->setField('fen', 1);			
     });
 
-####助手函数
+###助手函数
 
-    //格式：db('表名', '配置')
+已去除内置，请自行设置此函数：
+
+	function db($table = '', $config = []) {
+		return \willphp\db\Db::connect($config, $table);
+	}
+
+使用示例：
+
     db('users')->find();
 
-
-####where条件
+###where条件
 
 where方法常用参数设置，格式如下：
 
@@ -270,3 +276,4 @@ where(字段名,表达式,条件,or)
 
     Db::table('users')->where('id', '=', 1, 'or')->where('id', 2)->where('status',1)->select(); 
     //sql：SELECT * FROM `wp_users` WHERE (`id`=1 OR `id`=2) AND `status`=1
+    

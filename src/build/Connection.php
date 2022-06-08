@@ -3,12 +3,15 @@
  | Software: [WillPHP framework]
  | Site: www.113344.com
  |--------------------------------------------------------------------------
- | Author: no-mind <24203741@qq.com>
+ | Author: 无念 <24203741@qq.com>
  | WeChat: www113344
  | Copyright (c) 2020-2022, www.113344.com. All Rights Reserved.
  |-------------------------------------------------------------------------*/
 namespace willphp\db\build;
 use willphp\config\Config;
+/**
+ * 数据库连接器
+ */
 class Connection {
 	protected $link = null; //PDO链接
 	protected $queryResult = null; //查询结果集
@@ -21,8 +24,8 @@ class Connection {
 	 * 构造方法
 	 * @param array $config 数据库配置
 	 */
-	public function __construct(array $config = []) {		
-		$this->config = !empty($config)? $config : Config::get('database.default', []);		
+	public function __construct(array $config = []) {
+		$this->config = !empty($config)? $config : Config::get('database.default', []);
 		$this->connect();
 	}
 	/**
@@ -63,7 +66,7 @@ class Connection {
 	 * 链接DB
 	 * @param  array  $config 配置信息
 	 */
-	public function connect(array $config = []) {		
+	public function connect(array $config = []) {
 		if (!empty($config) && is_array($config)) {
 			$this->config = array_merge($this->config, $config);
 		}
@@ -80,7 +83,7 @@ class Connection {
 			}
 		} catch(\PDOException $e){
 			throw new \Exception('ERROR: '.$e->getMessage());
-		}		
+		}
 	}
 	/**
 	 * 获取DB链接
@@ -89,7 +92,7 @@ class Connection {
 	public function getLink() {
 		if (is_null($this->link)) {
 			$this->connect();
-		}		
+		}
 		return $this->link;
 	}
 	/**
@@ -102,7 +105,7 @@ class Connection {
 			return $this->config;
 		}
 		return isset($this->config[$name]) ? $this->config[$name] : '';
-	}	
+	}
 	/**
 	 * 执行命令语句
 	 * @param  string $sql  SQL语句
@@ -126,15 +129,15 @@ class Connection {
 		} else {
 			$this->bindValue($bind);
 		}
-		try {	
+		try {
 			$this->queryResult->execute();
 			$this->numRows = $this->queryResult->rowCount();
-			return $this->numRows;			
+			return $this->numRows;
 		} catch(\Exception $e){
 			$error = $this->queryResult->errorInfo();
 			throw new \Exception($sql.';['.var_export($bind, true).']'.implode(';', $error));
-		}		
-	}	
+		}
+	}
 	/**
 	 * 执行查询语句
 	 * @param  string  $sql  SQL语句
@@ -159,13 +162,13 @@ class Connection {
 		} else {
 			$this->bindValue($bind);
 		}
-		try {				
+		try {
 			$this->queryResult->execute();
 			return $this->getResult($pdo, $procedure);
 		}  catch(\Exception $e){
 			$error = $this->queryResult->errorInfo();
 			throw new \Exception($sql.';['.var_export($bind, true).']'.implode(';', $error));
-		}			
+		}
 	}
 	/**
 	 * 获得数据集数组
@@ -179,9 +182,9 @@ class Connection {
 		}
 		if ($procedure) {
 			return $this->procedure();
-		}	
+		}
 		$result = $this->queryResult->fetchAll(\PDO::FETCH_ASSOC);
-		$this->numRows = count($result);		
+		$this->numRows = count($result);
 		return $result? $result : [];
 	}
 	/**
@@ -227,7 +230,7 @@ class Connection {
 	 * @return void
 	 */
 	protected function bindValue(array $bind = []) {
-		foreach ($bind as $key => $val) {			
+		foreach ($bind as $key => $val) {
 			$param = is_numeric($key) ? $key + 1 : ':'.$key;
 			if (is_array($val)) {
 				if (\PDO::PARAM_INT == $val[1] && '' === $val[0]) {
@@ -238,7 +241,7 @@ class Connection {
 				$result = $this->queryResult->bindValue($param, $val);
 			}
 			if (!$result) {
-				throw new \Exception('Bind value error: '.$param);			
+				throw new \Exception('Bind value error: '.$param);
 			}
 		}
 	}
@@ -251,7 +254,7 @@ class Connection {
 		return $this->getLink()->quote($value);
 	}
 	/**
-	 * 根据参数绑定组装最终的SQL语句 
+	 * 根据参数绑定组装最终的SQL语句
 	 * @param string    $sql  带参数绑定的sql语句
 	 * @param array     $bind 参数绑定列表
 	 * @return string   拼装后的sql语句
@@ -259,7 +262,7 @@ class Connection {
 	public function getRealSql($sql, array $bind = []) {
 		if (is_array($sql)) {
 			$sql = implode(';', (array) $sql);
-		}		
+		}
 		foreach ($bind as $key => $val) {
 			$value = is_array($val) ? $val[0] : $val;
 			$type  = is_array($val) ? $val[1] : \PDO::PARAM_STR;
@@ -275,7 +278,7 @@ class Connection {
 						[':'.$key.')', ':'.$key.',', ':'.$key.' ', ':'.$key.PHP_EOL],
 						[$value. ')', $value.',', $value.' ', $value.PHP_EOL],
 						$sql.' '
-				);
+						);
 			}
 		}
 		return rtrim($sql);
@@ -309,12 +312,12 @@ class Connection {
 	 */
 	public function transaction(\Closure $closure) {
 		try {
-			$this->startTrans();		
+			$this->startTrans();
 			call_user_func($closure);
 			$this->commit();
 		} catch (\Exception $e) {
 			$this->rollback();
-		}		
+		}
 		return $this;
 	}
 	/**
@@ -322,7 +325,7 @@ class Connection {
 	 * @return $this
 	 */
 	public function startTrans() {
-		$this->getLink()->beginTransaction();		
+		$this->getLink()->beginTransaction();
 		return $this;
 	}
 	/**
@@ -330,7 +333,7 @@ class Connection {
 	 * @return $this
 	 */
 	public function rollback() {
-		$this->getLink()->rollback();		
+		$this->getLink()->rollback();
 		return $this;
 	}
 	/**
@@ -338,7 +341,7 @@ class Connection {
 	 * @return $this
 	 */
 	public function commit() {
-		$this->getLink()->commit();		
+		$this->getLink()->commit();
 		return $this;
 	}
 }

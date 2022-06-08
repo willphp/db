@@ -3,16 +3,11 @@
  | Software: [WillPHP framework]
  | Site: www.113344.com
  |--------------------------------------------------------------------------
- | Author: no-mind <24203741@qq.com>
+ | Author: 无念 <24203741@qq.com>
  | WeChat: www113344
  | Copyright (c) 2020-2022, www.113344.com. All Rights Reserved.
  |-------------------------------------------------------------------------*/
 namespace willphp\db\build;
-/**
- * Sql生成器
- * @author Nomind 24203741@qq.com
- * @version v1.0
- */
 class Builder {
 	protected $connection = null;
 	protected $query = null;
@@ -232,7 +227,7 @@ class Builder {
 	 */
 	protected function parseTable($tables = '') {
 		$tables = empty($tables)? $this->params['table'] : $tables;
-		$prefix = $this->connection->getConfig('table_pre'); //表前缀		
+		$prefix = $this->connection->getConfig('db_prefix'); //表前缀		
 		$item = [];			
 		foreach ((array) $tables as $key => $table) {			
 			if (!is_numeric($key)) {				
